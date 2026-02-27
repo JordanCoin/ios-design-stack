@@ -10,6 +10,7 @@ A production-grade design-to-code pipeline for iOS apps using AI agents.
 | **Design** | Pencil.dev + MCP | Canvas design → SwiftUI code |
 | **Build** | XcodeBuildMCP | Compile, run, screenshot, validate |
 | **Iterate** | Ralph Loop | Autonomous iteration until complete |
+| **Debug** | MotionEyes | Trace real animation values from logs |
 
 ## How It Works
 
