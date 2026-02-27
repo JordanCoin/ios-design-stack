@@ -56,6 +56,8 @@ Output <promise>COMPLETE</promise> when:
 - `design-philosophy/` — Taste and design thinking
 - `pencil-mcp/` — Pencil.dev MCP integration
 - `ralph-loop/` — Autonomous iteration pattern
+- `motioneyes/` — Animation debugging from logs
+- `xcode-previews/` — Build and capture SwiftUI previews for visual analysis
 
 ## Requirements
 
