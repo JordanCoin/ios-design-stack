@@ -58,6 +58,7 @@ Output <promise>COMPLETE</promise> when:
 - `ralph-loop/` — Autonomous iteration pattern
 - `motioneyes/` — Animation debugging from logs
 - `xcode-previews/` — Build and capture SwiftUI previews for visual analysis
+- `aso-skills/` — App Store Optimization (ASO) and mobile app marketing ([Eronred/aso-skills](https://github.com/Eronred/aso-skills))
 
 ## Requirements
 
