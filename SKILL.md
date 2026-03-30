@@ -1,126 +1,202 @@
 ---
 name: ios-design-stack
 description: >
-  Design-to-code pipeline for iOS apps. Orchestrates: canvas design (Pencil MCP),
-  taste review (Design Philosophy), build validation (XcodeBuildMCP), autonomous
-  iteration (Ralph Loop), and animation debugging (MotionEyes). Use when designing
-  iOS UI from scratch, iterating on visual quality, or running a full
-  design-build-validate cycle.
+  Invocable iOS design pipeline. When called with a design prompt, runs an autonomous
+  loop: designs iOS screens in Pencil MCP following Apple HIG, reviews for taste using
+  Design Philosophy, validates with XcodeBuildMCP, and iterates until done.
+  Use as: /ios-design-stack "Design a [screen] for [app] with [requirements]"
+user-invocable: true
+argument-hint: "Design a [screen] for [app]"
 ---
 
-# iOS Design Stack
+# /ios-design-stack
 
-Production-grade design-to-code pipeline for iOS. Not a skill collection — a workflow
-that chains skills in the right order.
+Autonomous iOS design pipeline. Give it a prompt, it designs, reviews, builds, and
+iterates until the result passes both taste and build checks.
 
-## The Pipeline
+## When Invoked
 
-```
-1. DESIGN      → Pencil MCP (canvas design → real SwiftUI export)
-2. REVIEW      → Design Philosophy (taste filter — does this earn its place?)
-3. BUILD       → XcodeBuildMCP (compile, run in simulator, screenshot)
-4. ITERATE     → Ralph Loop (loop back to step 1 until taste + build pass)
-5. DEBUG       → MotionEyes (trace real animation values if motion feels off)
-```
+Parse the user's prompt as the **design brief**. Then run this pipeline as a loop
+until the design passes all checks.
 
-Design first. Then critique. Then validate. Then iterate until it's right.
-
-## Step 1: Design — Pencil MCP
-
-Create the UI on canvas. The agent draws real components, not mockups.
-
-- Open or create a `.pen` file with `open_document`
-- Get design guidelines with `get_guidelines(topic=mobile-app)`
-- Get a style guide with `get_style_guide` for design inspiration
-- Design components with `batch_design`
-- Export as SwiftUI code
-
-Load the full skill: `skills/pencil-mcp/SKILL.md`
-
-Requires: Pencil.dev account + MCP server configured.
-
-## Step 2: Review — Design Philosophy
-
-Now critique what you just designed. Apply these filters:
-
-- **What's the one feeling this should create?** If you can't answer in one word, redesign.
-- **What would Steve Jobs remove?** If you can't find anything to cut, you haven't looked.
-- **Does every element earn its place?** If removing it changes nothing, remove it.
-- **Dieter Rams #10: "As little design as possible."**
-
-This is the gate. If the design doesn't pass taste, go back to Step 1.
-Don't build something that isn't good enough yet.
-
-Load the full skill: `skills/design-philosophy/SKILL.md`
-
-## Step 3: Build — XcodeBuildMCP
-
-The design passed taste review. Now validate it compiles and renders correctly.
+## Pipeline
 
 ```
-1. Build the project: xcodebuild or swift build
-2. Run in simulator: boot + install + launch
-3. Capture screenshot: compare to design intent from Pencil
-4. Check for warnings: zero warnings target
+┌─────────────────────────────────────────────────┐
+│  1. SETUP     Load tokens + guidelines          │
+│  2. DESIGN    Create screen in Pencil MCP       │
+│  3. REVIEW    Taste-check with Design Philosophy│
+│  4. BUILD     Export SwiftUI, build, screenshot  │
+│  5. VERIFY    Compare screenshot to design       │
+│  6. ITERATE   Fix issues, loop to step 2         │
+│  7. DONE      All checks pass                    │
+└─────────────────────────────────────────────────┘
 ```
 
-Skill source: [getsentry/XcodeBuildMCP](https://github.com/getsentry/XcodeBuildMCP)
+## Step 1: Setup
 
-## Step 4: Iterate — Ralph Loop
-
-If the screenshot doesn't match the design, or taste review fails, loop back.
-Ralph catches premature exits and re-feeds the prompt until success criteria are met.
+Load the iOS design skills in this repo:
 
 ```
-/ralph-loop "Fix the [specific issue] in [specific file].
+Read: skills/ios-design-tokens/SKILL.md     ← iOS HIG tokens (colors, type, spacing)
+Read: skills/pencil-ios-design/SKILL.md     ← Pencil MCP iOS workflow
+Read: skills/design-philosophy/SKILL.md     ← taste principles
+```
+
+Then initialize:
+
+1. Call `get_editor_state` to check Pencil MCP is available
+2. Call `open_document("new")` or open existing .pen file
+3. Call `set_variables` with iOS design tokens from `ios-design-tokens` skill
+4. Call `get_guidelines(topic="mobile-app")` for Apple HIG rules
+
+If the user specified an aesthetic (e.g., "dark, minimal, premium"):
+5. Call `get_style_guide_tags` then `get_style_guide(tags=[...])` to get style direction
+
+## Step 2: Design
+
+Using the `pencil-ios-design` skill as your guide:
+
+1. Call `find_empty_space_on_canvas(width=393, height=852)` for iPhone 15 Pro frame size
+2. Call `batch_design` to create the screen layout. Max 25 operations per call.
+
+**Mandatory iOS rules:**
+- 59pt top safe area (Dynamic Island)
+- 34pt bottom safe area (home indicator)
+- 16-20pt horizontal margins
+- All touch targets ≥ 44x44pt
+- 8pt spacing grid
+- SF Pro typography only, using iOS type scale
+- iOS semantic colors only (not hardcoded hex)
+- Continuous corners (squircle)
+
+Refer to the common screen patterns in `pencil-ios-design` for Login, Settings,
+Detail, and other standard layouts.
+
+## Step 3: Review (Design Philosophy)
+
+Before building, taste-check the design. Ask these questions:
+
+1. **What's the one feeling this creates?** Write it in one word.
+2. **What would you remove?** Cut at least one element.
+3. **Does every element earn its place?** If removing it changes nothing, remove it.
+4. **Would Apple ship this?** Be honest.
+
+From the Design Philosophy skill:
+- Typography creates hierarchy, not color or weight
+- Whitespace = premium. Cramped = cheap.
+- One focal point per screen
+- One accent color maximum
+- Less, but better. (Dieter Rams #10)
+
+**If the design fails taste review**, go back to Step 2 and simplify.
+Do NOT proceed to build until taste passes.
+
+## Step 4: Build
+
+Export the design and validate it compiles:
+
+1. Export the Pencil design nodes to SwiftUI code
+2. Create/update the Swift file in the project
+3. Build with XcodeBuildMCP: `xcodebuild build`
+4. Run in simulator: `xcrun simctl boot` + install + launch
+5. Capture screenshot: `xcodebuildmcp screenshot`
+
+If XcodeBuildMCP is not available, skip to Step 5 with the Pencil screenshot only.
+
+## Step 5: Verify
+
+Compare the build screenshot (or Pencil screenshot) against the design:
+
+```
+Call: get_screenshot(nodeId="frame-id")
+Call: snapshot_layout(nodeId="frame-id", problemsOnly=true)
+Call: search_all_unique_properties(nodeId="frame-id", properties=["fillColor", "fontFamily", "fontSize"])
+```
+
+**Verification checklist:**
+- [ ] Spacing follows 8pt grid
+- [ ] All touch targets ≥ 44pt
+- [ ] Typography hierarchy is clear (squint test passes)
+- [ ] One focal point dominates the screen
+- [ ] Only SF Pro font family used
+- [ ] Only iOS type scale sizes (11, 12, 13, 15, 16, 17, 20, 22, 28, 34)
+- [ ] Only semantic colors (no random hex)
+- [ ] Continuous corners, not circular
+- [ ] Safe areas respected (top 59pt, bottom 34pt)
+- [ ] No layout issues (snapshot_layout reports clean)
+- [ ] Code compiles without warnings (if built)
+- [ ] Screenshot matches design intent
+
+## Step 6: Iterate
+
+If any checks fail:
+
+1. Identify the specific issue
+2. Fix it in the Pencil design (batch_design update operations)
+3. Re-verify (back to Step 5)
+4. If it's a taste issue, revisit Step 3
+5. If it's a build issue, revisit Step 4
+
+Continue iterating until ALL checks pass.
+
+## Step 7: Done
+
+When all checks pass, report:
+
+```
+DESIGN COMPLETE
+
+Screen: [name]
+Feeling: [one word]
+Checks passed:
+  ✓ Typography: SF Pro, iOS type scale
+  ✓ Spacing: 8pt grid
+  ✓ Colors: iOS semantic tokens
+  ✓ Touch targets: ≥ 44pt
+  ✓ Safe areas: respected
+  ✓ Taste: [one sentence on why it passes]
+  ✓ Build: compiles, zero warnings
+  ✓ Screenshot: matches design intent
+
+Files:
+  - [.pen file path]
+  - [.swift file path]
+```
+
+## Using with Ralph Loop
+
+For fully autonomous iteration, wrap this skill in a Ralph Loop:
+
+```
+/ralph-loop "Run /ios-design-stack with this brief:
+
+[USER'S DESIGN BRIEF HERE]
+
 Success criteria:
-- Design matches Pencil canvas intent
-- Passes Design Philosophy taste check
+- Design passes all verification checks
 - Code compiles without warnings
-- Screenshot looks correct
-Output <promise>COMPLETE</promise> when done." --max-iterations 10
+- Screenshot matches design intent
+- Taste check passes (would Apple ship this?)
+
+Output <promise>DESIGN_COMPLETE</promise> when all checks pass." --max-iterations 15
 ```
 
-The loop goes: design → review → build → screenshot → compare → fix → repeat.
+The Ralph Loop will keep re-running the pipeline until it converges on a design
+that passes every check. Typical: 3-5 iterations for a simple screen.
 
-Skill source: [anthropics/claude-code/plugins/ralph-wiggum](https://github.com/anthropics/claude-code)
+## External Dependencies
 
-## Step 5: Debug — MotionEyes (if needed)
+| Tool | Source | Required? |
+|------|--------|-----------|
+| Pencil MCP | pencil.dev | **Yes** — the design canvas |
+| XcodeBuildMCP | [getsentry/XcodeBuildMCP](https://github.com/getsentry/XcodeBuildMCP) | Optional — for build validation |
+| Ralph Loop | [anthropics/claude-code](https://github.com/anthropics/claude-code) | Optional — for autonomous iteration |
 
-When animations don't feel right, don't guess — instrument and measure.
+## Skills in This Repo
 
-MotionEyes adds temporary logging to SwiftUI views that traces real motion values
-(position, opacity, scale) over time. Read the logs, compare to intent, fix.
-
-Skill source: [edwardsanchez/MotionEyes](https://github.com/edwardsanchez/MotionEyes)
-
-## Full Pipeline Example
-
-```
-User: "Design a login screen for my fitness app"
-
-Agent:
-1. [design] Opens Pencil MCP, gets mobile-app guidelines + style guide
-2. [design] Designs login screen on canvas — email, password, submit, logo
-3. [review] Taste check: "Clean, trustworthy, premium" — passes
-4. [review] Would Apple ship this? The forgot-password link is cluttering. Remove it,
-            add it to a secondary flow. Back to Pencil to simplify.
-5. [design] Simplified version — just email, password, submit. Cleaner.
-6. [review] Passes taste. "Less, but better."
-7. [build] Exports SwiftUI, builds project, runs in simulator
-8. [build] Screenshots — button alignment is off by 4px
-9. [iterate] Ralph loop fixes alignment, re-screenshots
-10. [build] Looks correct. Zero warnings. Done.
-```
-
-## Standalone Skills
-
-These two skills are original to this repo and can be used independently:
-
-- `skills/pencil-mcp/` — Pencil.dev MCP integration guide
-- `skills/design-philosophy/` — Taste and design thinking (Dieter Rams principles)
-
-## Full Skill Collection
-
-For the complete set of 200+ iOS skills (including all skills referenced in this pipeline),
-see [ios-skills-collection](https://github.com/JordanCoin/ios-skills-collection).
+| Skill | What it does |
+|-------|-------------|
+| `skills/design-philosophy/` | Taste principles — Dieter Rams, "less but better" |
+| `skills/ios-design-tokens/` | iOS HIG tokens — typography, colors, spacing, radii |
+| `skills/pencil-ios-design/` | iOS Pencil MCP workflow — how to design iOS screens |

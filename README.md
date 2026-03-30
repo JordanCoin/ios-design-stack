@@ -1,34 +1,11 @@
 # iOS Design Stack
 
-A design-to-code pipeline for iOS apps using AI agents. Not a skill collection — a workflow.
-
-## The Pipeline
-
-```
-Pencil MCP → Design Philosophy → XcodeBuildMCP → Ralph Loop
-  (create)    (review/filter)      (validate)     (iterate)
-```
-
-1. **Pencil MCP** — agent designs on canvas, exports real SwiftUI code
-2. **Design Philosophy** — reviews for taste, filters AI slop, enforces "less but better"
-3. **XcodeBuildMCP** — builds, runs in simulator, captures screenshots
-4. **Ralph Loop** — if it doesn't pass taste or build checks, loop back to step 1
-5. **MotionEyes** — traces real animation values when debugging motion
-
-## Install
-
-```bash
-# As a Claude Code skill
-cp -r skills/* ~/.claude/skills/
-
-# Or use the full collection (200+ skills with auto-routing)
-git clone https://github.com/JordanCoin/ios-skills-collection
-claude plugins add ios-skills-collection
-```
+Autonomous iOS design pipeline. Give it a prompt, it designs iOS screens in Pencil MCP,
+reviews for taste, builds with XcodeBuildMCP, and iterates until done.
 
 ## Usage
 
-```bash
+```
 /ios-design-stack "Design a login screen for iOS.
 Requirements:
 - Follow Apple HIG
@@ -37,47 +14,56 @@ Requirements:
 - Dark mode support"
 ```
 
-Or invoke the pipeline steps manually:
+## The Pipeline
 
 ```
-1. Read skills/pencil-mcp/SKILL.md — design on canvas
-2. Read skills/design-philosophy/SKILL.md — review for taste
-3. Use XcodeBuildMCP to build + screenshot
-4. Use Ralph Loop to iterate until taste + build both pass
-5. Use MotionEyes if animations need debugging
+SETUP → DESIGN → REVIEW → BUILD → VERIFY → ITERATE → DONE
 ```
 
-## What's in This Repo
+1. **Setup** — loads iOS design tokens (SF Pro type scale, semantic colors, 8pt grid)
+2. **Design** — creates screen in Pencil MCP with Apple HIG compliance
+3. **Review** — taste-checks against Design Philosophy (Dieter Rams principles)
+4. **Build** — exports to SwiftUI, builds with XcodeBuildMCP, screenshots
+5. **Verify** — checks spacing, touch targets, typography, colors, safe areas
+6. **Iterate** — fixes issues, loops until all checks pass
 
-| File | What it is |
-|------|-----------|
-| `SKILL.md` | The pipeline orchestrator — loads when invoked |
-| `skills/pencil-mcp/` | Original: Pencil.dev MCP integration guide |
-| `skills/design-philosophy/` | Original: Dieter Rams principles, taste building |
+## With Ralph Loop (fully autonomous)
 
-## External Dependencies
+```
+/ralph-loop "Run /ios-design-stack: Design a settings screen for a fitness app.
+Dark mode, SF Pro, minimal. Output <promise>DESIGN_COMPLETE</promise> when done."
+```
 
-These tools are used by the pipeline but maintained in their own repos:
+Ralph keeps iterating until the design passes every check. Typical: 3-5 iterations.
 
-| Tool | Source | Purpose |
-|------|--------|---------|
-| XcodeBuildMCP | [getsentry/XcodeBuildMCP](https://github.com/getsentry/XcodeBuildMCP) | Build, run, screenshot |
-| Ralph Loop | [anthropics/claude-code](https://github.com/anthropics/claude-code) | Autonomous iteration |
-| MotionEyes | [edwardsanchez/MotionEyes](https://github.com/edwardsanchez/MotionEyes) | Animation debugging |
-| Xcode Previews | [Iron-Ham/XcodePreviews](https://github.com/Iron-Ham/XcodePreviews) | Visual preview capture |
-| ASO Skills | [Eronred/aso-skills](https://github.com/Eronred/aso-skills) | App Store Optimization |
+## Install
 
-## Full Collection
+```bash
+# As a Claude Code skill (copy skills to your project)
+cp -r skills/* .claude/skills/
 
-This repo is the focused design pipeline. For the complete set of 200+ iOS/Swift/Xcode
-skills with auto-routing hooks, see [ios-skills-collection](https://github.com/JordanCoin/ios-skills-collection).
+# Or install as plugin
+claude plugins add .
+```
+
+## Skills
+
+| Skill | What |
+|-------|------|
+| `design-philosophy` | Taste principles — Dieter Rams, "less but better" |
+| `ios-design-tokens` | iOS HIG tokens — SF Pro, semantic colors, 8pt grid, radii |
+| `pencil-ios-design` | iOS Pencil MCP workflow — screen patterns, layout rules |
 
 ## Requirements
 
-- Claude Code or compatible agent
-- Pencil.dev account (for Pencil MCP)
-- Xcode 15+ (for XcodeBuildMCP)
-- XcodeBuildMCP installed
+- Pencil.dev MCP server (design canvas)
+- XcodeBuildMCP (optional — for build validation)
+- Ralph Loop plugin (optional — for autonomous iteration)
+
+## Full Collection
+
+For 200+ iOS/Swift/Xcode skills beyond design, see
+[ios-skills-collection](https://github.com/JordanCoin/ios-skills-collection).
 
 ## License
 
