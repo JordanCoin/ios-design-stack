@@ -1,3 +1,8 @@
+---
+name: design-philosophy
+description: Design thinking and taste-building principles based on Dieter Rams. Use when making design decisions, reviewing UI quality, or building taste for any visual interface — web or native.
+---
+
 # Design Philosophy Skill
 
 How to think about design. Not tools — thinking.
